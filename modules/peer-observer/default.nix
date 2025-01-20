@@ -21,11 +21,12 @@ in {
 
       extractor = {
         enable = mkEnableOption "peer-observer extractor";
-        eventsAddress = mkOption {
+        
+        natsAddress = mkOption {
           type = types.str;
-          default = "tcp://127.0.0.1:8883";
-          example = "tcp://127.0.0.1:8883";
-          description = "Address the extractor publishes events on";
+          default = "127.0.0.1:4222";
+          example = "127.0.0.1:4222";
+          description = "Address of the NATS server the extractor publishes events to";
         };
         
         bitcoindPath = mkOption {
@@ -122,7 +123,7 @@ in {
       startLimitIntervalSec = 120;
       serviceConfig =
         {
-          ExecStart = "${cfg.package}/bin/extractor --bitcoind-path ${cfg.extractor.bitcoindPath} --bitcoind-pid-file ${cfg.extractor.bitcoindPIDFile} --libbpf-debug --address ${cfg.extractor.eventsAddress} ${cfg.extractor.extraArgs}";
+          ExecStart = "${cfg.package}/bin/extractor --bitcoind-path ${cfg.extractor.bitcoindPath} --bitcoind-pid-file ${cfg.extractor.bitcoindPIDFile} --libbpf-debug --nats-address ${cfg.extractor.natsAddress} ${cfg.extractor.extraArgs}";
           Restart = "always";
           # restart every 30 seconds but fail if we do more than 3 restarts in 120 sec
           RestartSec = 30;
@@ -153,7 +154,7 @@ in {
         wants = ["network-online.target" "peer-observer-extractor.service" ];
         startLimitIntervalSec = 120;
         serviceConfig = {
-          ExecStart = "${cfg.package}/bin/metrics --address ${cfg.extractor.eventsAddress} --metrics-address ${cfg.metrics.metricsAddress}";
+          ExecStart = "${cfg.package}/bin/metrics --nats-address ${cfg.extractor.natsAddress} --metrics-address ${cfg.metrics.metricsAddress}";
           Environment = "RUST_LOG=info";
           Restart = "always";
           # restart every 30 seconds. Limit this to 3 times in 'startLimitIntervalSec'
@@ -176,7 +177,7 @@ in {
         wants = ["network-online.target" "peer-observer-extractor.service" ];
         startLimitIntervalSec = 120;
         serviceConfig = {
-          ExecStart = "${cfg.package}/bin/connectivity-check --address ${cfg.extractor.eventsAddress} --metrics-address ${cfg.addrConnectivity.metricsAddress}";
+          ExecStart = "${cfg.package}/bin/connectivity-check --nats-address ${cfg.extractor.natsAddress} --metrics-address ${cfg.addrConnectivity.metricsAddress}";
           Environment = "RUST_LOG=info";
           Restart = "always";
           # restart every 30 seconds. Limit this to 3 times in 'startLimitIntervalSec'
@@ -201,7 +202,7 @@ in {
         wants = ["network-online.target" "peer-observer-extractor.service" ];
         startLimitIntervalSec = 120;
         serviceConfig = {
-          ExecStart = "${cfg.package}/bin/websocket --address ${cfg.extractor.eventsAddress} --websocket-address ${cfg.websocket.websocketAddress}";
+          ExecStart = "${cfg.package}/bin/websocket --nats-address ${cfg.extractor.natsAddress} --websocket-address ${cfg.websocket.websocketAddress}";
           Environment = "RUST_LOG=info";
           Restart = "always";
           # restart every 30 seconds. Limit this to 3 times in 'startLimitIntervalSec'
